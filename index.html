@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesuatu yang Keren Buat Kamu!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #intro {
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 100;
+            padding: 2rem;
+            text-align: center;
+            animation: fadeIn 2s ease;
+        }
+        
+        .word {
+            position: absolute;
+            color: white;
+            font-size: clamp(4rem, 20vw, 15rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            z-index: 10;
+            opacity: 0;
+            transform: scale(0);
+            text-shadow: 
+                0 0 10px #fff,
+                0 0 20px #ff00ff,
+                0 0 30px #ff00ff;
+        }
+
+        #word1 { top: 20%; left: 10%; transform-origin: left bottom; }
+        #word2 { top: 40%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center center; }
+        #word3 { bottom: 10%; right: 10%; transform-origin: right top; }
+
+        .word.animate {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #word2.animate {
+            transform: translateX(-50%) scale(1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .particle {
+            position: absolute;
+            background-color: var(--color);
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 101;
+            transition: transform 1s ease-out, opacity 1s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confettiCanvas"></canvas>
+    <div class="container" id="mainContainer">
+        <div id="intro">
+            <h1>KLIK DI MANA SAJA</h1>
+            <p>(Pakai headset biar lebih seru!)</p>
+        </div>
+
+        <div id="word1" class="word">KAMU</div>
+        <div id="word2" class="word">KEREN</div>
+        <div id="word3" class="word">BANGET!</div>
+    </div>
+
+    <script>
+        const mainContainer = document.getElementById('mainContainer');
+        const intro = document.getElementById('intro');
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        let hasStarted = false;
+
+        // --- SOUND EFFECT ---
+        const synth = new Tone.MembraneSynth({
+            pitchDecay: 0.01,
+            octaves: 6,
+            envelope: { attack: 0.001, decay: 0.2, sustain: 0 }
+        }).toDestination();
+
+        function playSound() {
+            if (Tone.context.state !== 'running') {
+                Tone.context.resume();
+            }
+            synth.triggerAttackRelease("C2", "8n");
+        }
+        
+        // --- EVENT UTAMA ---
+        window.addEventListener('click', (e) => {
+            if (!hasStarted) {
+                startExperience();
+            } else {
+                createFirework(e.clientX, e.clientY);
+                playSound();
+            }
+        });
+
+        function startExperience() {
+            hasStarted = true;
+            intro.style.transition = 'opacity 0.5s';
+            intro.style.opacity = '0';
+            setTimeout(() => intro.remove(), 500);
+
+            // Munculkan kata-kata secara berurutan
+            setTimeout(() => document.getElementById('word1').classList.add('animate'), 500);
+            setTimeout(() => document.getElementById('word2').classList.add('animate'), 1300);
+            setTimeout(() => document.getElementById('word3').classList.add('animate'), 2100);
+            
+            // Mulai hujan confetti
+            animateConfetti();
+        }
+
+        // --- EFEK KEMBANG API/PARTIKEL SAAT KLIK ---
+        function createFirework(x, y) {
+            const colors = ['#ffc700', '#ff0000', '#22ff00', '#00ccff', '#ff00ff'];
+            const particleCount = 20;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                document.body.appendChild(particle);
+
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 8 + 4;
+                particle.style.setProperty('--color', color);
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+
+                const angle = Math.random() * 360;
+                const distance = Math.random() * 150 + 80;
+                const transformX = Math.cos(angle * Math.PI / 180) * distance;
+                const transformY = Math.sin(angle * Math.PI / 180) * distance;
+
+                setTimeout(() => {
+                    particle.style.transform = `translate(${transformX}px, ${transformY}px)`;
+                    particle.style.opacity = '0';
+                }, 10);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 1000);
+            }
+        }
+
+        // --- HUJAN KONFETI & EMOJI ---
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let confetti = [];
+        const confettiSettings = {
+            emojis: ['🎉', '✨', '🥳', '🔥', '💯'],
+            count: 200,
+        };
+
+        function resetConfetti(p) {
+            p.x = Math.random() * canvas.width;
+            p.y = -20;
+            p.char = confettiSettings.emojis[Math.floor(Math.random() * confettiSettings.emojis.length)];
+            p.size = Math.random() * 25 + 15;
+            p.speed = Math.random() * 3 + 2;
+            p.rotation = 0;
+            p.spin = (Math.random() - 0.5) * 8;
+        }
+        
+        for(let i=0; i<confettiSettings.count; i++) {
+            let particle = {};
+            resetConfetti(particle);
+            particle.y = Math.random() * canvas.height; // Mulai dari posisi acak
+            confetti.push(particle);
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            confetti.forEach(p => {
+                p.y += p.speed;
+                p.rotation += p.spin;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.font = `${p.size}px Arial`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(p.char, 0, 0);
+                ctx.restore();
+
+                if (p.y > canvas.height + 20) {
+                    resetConfetti(p);
+                }
+            });
+
+            requestAnimationFrame(animateConfetti);
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
+
