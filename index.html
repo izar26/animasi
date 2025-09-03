@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sesuatu yang Keren Buat Kamu!</title>
+    <title>Sesuatu yang Spesial Buat Kamu!</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #111;
+            background-color: #1a0a1a; /* Warna background lebih gelap dan keunguan */
             font-family: 'Poppins', sans-serif;
             -webkit-font-smoothing: antialiased;
         }
@@ -41,7 +41,7 @@
         .word {
             position: absolute;
             color: white;
-            font-size: clamp(4rem, 20vw, 15rem);
+            font-size: clamp(4rem, 18vw, 12rem);
             font-weight: 900;
             text-transform: uppercase;
             z-index: 10;
@@ -53,19 +53,16 @@
                 0 0 30px #ff00ff;
         }
 
-        #word1 { top: 20%; left: 10%; transform-origin: left bottom; }
-        #word2 { top: 40%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center center; }
-        #word3 { bottom: 10%; right: 10%; transform-origin: right top; }
+        #word1 { top: 15%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center; }
+        #word2 { top: 38%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center; }
+        #word3 { top: 61%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center; }
 
         .word.animate {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateX(-50%);
             transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #word2.animate {
-            transform: translateX(-50%) scale(1);
-        }
-
+        
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -81,6 +78,28 @@
             z-index: 101;
             transition: transform 1s ease-out, opacity 1s ease-out;
         }
+
+        /* --- STYLE BARU UNTUK FOTO --- */
+        .photo-container {
+            position: absolute;
+            z-index: 20;
+            opacity: 0;
+            transform: scale(0.5) rotate(-5deg);
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s;
+        }
+        .photo-container.show {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+        .photo-container img {
+            width: clamp(200px, 40vw, 300px);
+            border-radius: 15px;
+            border: 5px solid white;
+            box-shadow: 
+                0 0 15px #fff,
+                0 0 25px #ff00ff,
+                0 0 40px #ff00ff;
+        }
     </style>
 </head>
 <body>
@@ -91,15 +110,21 @@
             <p>(Pakai headset biar lebih seru!)</p>
         </div>
 
-        <div id="word1" class="word">KAMU</div>
-        <div id="word2" class="word">KEREN</div>
-        <div id="word3" class="word">BANGET!</div>
+        <div id="word1" class="word">BUAT</div>
+        <div id="word2" class="word">ORANG</div>
+        <div id="word3" class="word">SPESIAL</div>
+
+        <!-- Wadah untuk Foto -->
+        <div class="photo-container" id="photoContainer">
+            <!-- GANTI URL FOTO DI BAWAH INI -->
+            <img src="https://placehold.co/300x400/ff69b4/ffffff?text=FOTO+KAMU" alt="Foto Spesial">
+        </div>
     </div>
 
     <script>
-        const mainContainer = document.getElementById('mainContainer');
         const intro = document.getElementById('intro');
         const canvas = document.getElementById('confettiCanvas');
+        const photoContainer = document.getElementById('photoContainer');
         const ctx = canvas.getContext('2d');
         let hasStarted = false;
 
@@ -138,13 +163,22 @@
             setTimeout(() => document.getElementById('word2').classList.add('animate'), 1300);
             setTimeout(() => document.getElementById('word3').classList.add('animate'), 2100);
             
-            // Mulai hujan confetti
+            // Munculkan foto setelah semua kata tampil
+            setTimeout(() => {
+                photoContainer.classList.add('show');
+                // Redupkan kata-kata agar foto menjadi fokus utama
+                document.querySelectorAll('.word').forEach(word => {
+                    word.style.transition = 'opacity 1s ease';
+                    word.style.opacity = '0.2';
+                });
+            }, 3000);
+            
             animateConfetti();
         }
 
-        // --- EFEK KEMBANG API/PARTIKEL SAAT KLIK ---
+        // --- EFEK PARTIKEL SAAT KLIK ---
         function createFirework(x, y) {
-            const colors = ['#ffc700', '#ff0000', '#22ff00', '#00ccff', '#ff00ff'];
+            const colors = ['#ff69b4', '#ff1493', '#ff00ff', '#f8f8ff', '#e6e6fa']; // Warna romantis
             const particleCount = 20;
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
@@ -169,35 +203,33 @@
                     particle.style.opacity = '0';
                 }, 10);
                 
-                setTimeout(() => {
-                    particle.remove();
-                }, 1000);
+                setTimeout(() => particle.remove(), 1000);
             }
         }
 
-        // --- HUJAN KONFETI & EMOJI ---
+        // --- HUJAN EMOJI CINTA ---
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let confetti = [];
         const confettiSettings = {
-            emojis: ['🎉', '✨', '🥳', '🔥', '💯'],
-            count: 200,
+            emojis: ['❤️', '💖', '💕', '😍', '😘'],
+            count: 100, // Jumlah dikurangi agar tidak berat
         };
 
         function resetConfetti(p) {
             p.x = Math.random() * canvas.width;
             p.y = -20;
             p.char = confettiSettings.emojis[Math.floor(Math.random() * confettiSettings.emojis.length)];
-            p.size = Math.random() * 25 + 15;
-            p.speed = Math.random() * 3 + 2;
+            p.size = Math.random() * 20 + 15;
+            p.speed = Math.random() * 2 + 1.5;
             p.rotation = 0;
-            p.spin = (Math.random() - 0.5) * 8;
+            p.spin = (Math.random() - 0.5) * 6;
         }
         
         for(let i=0; i<confettiSettings.count; i++) {
             let particle = {};
             resetConfetti(particle);
-            particle.y = Math.random() * canvas.height; // Mulai dari posisi acak
+            particle.y = Math.random() * canvas.height;
             confetti.push(particle);
         }
 
@@ -216,9 +248,7 @@
                 ctx.fillText(p.char, 0, 0);
                 ctx.restore();
 
-                if (p.y > canvas.height + 20) {
-                    resetConfetti(p);
-                }
+                if (p.y > canvas.height + 20) resetConfetti(p);
             });
 
             requestAnimationFrame(animateConfetti);
