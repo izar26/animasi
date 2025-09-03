@@ -3,261 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sesuatu yang Spesial Buat Kamu!</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap" rel="stylesheet">
+    <title>Sebuah Cerita Tentang Kita</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
-        body {
+        body, html {
             margin: 0;
+            padding: 0;
             overflow: hidden;
-            background-color: #1a0a1a; /* Warna background lebih gelap dan keunguan */
-            font-family: 'Poppins', sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
+            background-color: #000;
+            cursor: pointer;
         }
         canvas {
+            display: block;
             position: absolute;
             top: 0;
             left: 0;
             z-index: 1;
         }
-        #intro {
+        .ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
             color: white;
-            font-size: 2rem;
+            font-family: 'Dancing Script', cursive;
+            text-align: center;
+            pointer-events: none;
+        }
+        #prompt {
+            font-size: clamp(2rem, 5vw, 3rem);
+            text-shadow: 0 0 15px rgba(255, 182, 193, 0.8);
+            opacity: 1;
+            transition: opacity 1.5s ease;
+        }
+        #finalMessage {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            text-shadow: 0 0 20px #ff69b4, 0 0 30px #ff69b4;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+            position: absolute;
+            bottom: 10%;
+        }
+        #musicButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
             cursor: pointer;
             z-index: 100;
-            padding: 2rem;
-            text-align: center;
-            animation: fadeIn 2s ease;
-        }
-        
-        .word {
-            position: absolute;
-            color: white;
-            font-size: clamp(4rem, 18vw, 12rem);
-            font-weight: 900;
-            text-transform: uppercase;
-            z-index: 10;
-            opacity: 0;
-            transform: scale(0);
-            text-shadow: 
-                0 0 10px #fff,
-                0 0 20px #ff00ff,
-                0 0 30px #ff00ff;
-        }
-
-        #word1 { top: 15%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center; }
-        #word2 { top: 38%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center; }
-        #word3 { top: 61%; left: 50%; transform: translateX(-50%) scale(0); transform-origin: center; }
-
-        .word.animate {
-            opacity: 1;
-            transform: scale(1) translateX(-50%);
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .particle {
-            position: absolute;
-            background-color: var(--color);
-            border-radius: 50%;
-            width: 10px;
-            height: 10px;
-            pointer-events: none;
-            z-index: 101;
-            transition: transform 1s ease-out, opacity 1s ease-out;
-        }
-
-        /* --- STYLE BARU UNTUK FOTO --- */
-        .photo-container {
-            position: absolute;
-            z-index: 20;
-            opacity: 0;
-            transform: scale(0.5) rotate(-5deg);
-            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s;
-        }
-        .photo-container.show {
-            opacity: 1;
-            transform: scale(1) rotate(0deg);
-        }
-        .photo-container img {
-            width: clamp(200px, 40vw, 300px);
-            border-radius: 15px;
-            border: 5px solid white;
-            box-shadow: 
-                0 0 15px #fff,
-                0 0 25px #ff00ff,
-                0 0 40px #ff00ff;
+            pointer-events: all;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
 <body>
-    <canvas id="confettiCanvas"></canvas>
-    <div class="container" id="mainContainer">
-        <div id="intro">
-            <h1>KLIK DI MANA SAJA</h1>
-            <p>(Pakai headset biar lebih seru!)</p>
-        </div>
+    <!-- 
+      PENTING! GANTI URL GAMBAR DI BAWAH INI DENGAN FOTO KAMU.
+      Gunakan link gambar langsung (misal dari Imgur, Postimages, dll).
+      Pastikan fotonya berbentuk potret (berdiri) untuk hasil terbaik.
+    -->
+    <img id="sourceImage" src="https://placehold.co/400x600/ffc0cb/333?text=Foto+Kalian" style="display:none;" crossOrigin="anonymous">
 
-        <div id="word1" class="word">BUAT</div>
-        <div id="word2" class="word">ORANG</div>
-        <div id="word3" class="word">SPESIAL</div>
-
-        <!-- Wadah untuk Foto -->
-        <div class="photo-container" id="photoContainer">
-            <!-- GANTI URL FOTO DI BAWAH INI -->
-            <img src="https://placehold.co/300x400/ff69b4/ffffff?text=FOTO+KAMU" alt="Foto Spesial">
-        </div>
+    <canvas id="particleCanvas"></canvas>
+    
+    <div class="ui-container">
+        <h1 id="prompt">Klik di mana saja untuk memulai...</h1>
+        <h2 id="finalMessage">Kaulah duniaku.</h2>
     </div>
 
+    <button id="musicButton">🎵</button>
+
     <script>
-        const intro = document.getElementById('intro');
-        const canvas = document.getElementById('confettiCanvas');
-        const photoContainer = document.getElementById('photoContainer');
+        const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
+        const sourceImage = document.getElementById('sourceImage');
+        const promptEl = document.getElementById('prompt');
+        const finalMessageEl = document.getElementById('finalMessage');
+        const musicButton = document.getElementById('musicButton');
+
+        let particles = [];
         let hasStarted = false;
+        let musicPlaying = false;
+        const mouse = { x: null, y: null, radius: 100 };
 
-        // --- SOUND EFFECT ---
-        const synth = new Tone.MembraneSynth({
-            pitchDecay: 0.01,
-            octaves: 6,
-            envelope: { attack: 0.001, decay: 0.2, sustain: 0 }
+        // --- MUSIK ROMANTIS ---
+        const synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "fmsine", modulationType: "sine", harmonicity: 1.01 },
+            envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1.2 },
         }).toDestination();
+        synth.volume.value = -8;
 
-        function playSound() {
-            if (Tone.context.state !== 'running') {
-                Tone.context.resume();
-            }
-            synth.triggerAttackRelease("C2", "8n");
-        }
-        
-        // --- EVENT UTAMA ---
-        window.addEventListener('click', (e) => {
-            if (!hasStarted) {
-                startExperience();
+        const melody = new Tone.Sequence((time, note) => {
+            synth.triggerAttackRelease(note, "2n", time);
+        }, [
+            ['C4', 'E4', 'G4'], null, ['A3', 'C4', 'E4'], null, 
+            ['F3', 'A3', 'C4'], null, ['G3', 'B3', 'D4'], null
+        ], "1m");
+        melody.loop = true;
+
+        musicButton.addEventListener('click', () => {
+            if (Tone.context.state !== 'running') Tone.context.resume();
+            if (!musicPlaying) {
+                Tone.Transport.start();
+                melody.start(0);
+                musicPlaying = true;
+                musicButton.textContent = '🔇';
             } else {
-                createFirework(e.clientX, e.clientY);
-                playSound();
+                melody.stop();
+                Tone.Transport.stop();
+                musicPlaying = false;
+                musicButton.textContent = '🎵';
             }
         });
 
-        function startExperience() {
-            hasStarted = true;
-            intro.style.transition = 'opacity 0.5s';
-            intro.style.opacity = '0';
-            setTimeout(() => intro.remove(), 500);
+        // --- PARTIKEL & FISIKA ---
+        class Particle {
+            constructor(targetX, targetY, color) {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.color = color;
+                this.size = 2;
+                this.vx = 0;
+                this.vy = 0;
+                this.ease = 0.05;
+                this.friction = 0.92;
+                this.repelForce = 5;
+            }
 
-            // Munculkan kata-kata secara berurutan
-            setTimeout(() => document.getElementById('word1').classList.add('animate'), 500);
-            setTimeout(() => document.getElementById('word2').classList.add('animate'), 1300);
-            setTimeout(() => document.getElementById('word3').classList.add('animate'), 2100);
-            
-            // Munculkan foto setelah semua kata tampil
-            setTimeout(() => {
-                photoContainer.classList.add('show');
-                // Redupkan kata-kata agar foto menjadi fokus utama
-                document.querySelectorAll('.word').forEach(word => {
-                    word.style.transition = 'opacity 1s ease';
-                    word.style.opacity = '0.2';
-                });
-            }, 3000);
-            
-            animateConfetti();
-        }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
-        // --- EFEK PARTIKEL SAAT KLIK ---
-        function createFirework(x, y) {
-            const colors = ['#ff69b4', '#ff1493', '#ff00ff', '#f8f8ff', '#e6e6fa']; // Warna romantis
-            const particleCount = 20;
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.classList.add('particle');
-                document.body.appendChild(particle);
-
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const size = Math.random() * 8 + 4;
-                particle.style.setProperty('--color', color);
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${x}px`;
-                particle.style.top = `${y}px`;
-
-                const angle = Math.random() * 360;
-                const distance = Math.random() * 150 + 80;
-                const transformX = Math.cos(angle * Math.PI / 180) * distance;
-                const transformY = Math.sin(angle * Math.PI / 180) * distance;
-
-                setTimeout(() => {
-                    particle.style.transform = `translate(${transformX}px, ${transformY}px)`;
-                    particle.style.opacity = '0';
-                }, 10);
+            update() {
+                // Interaksi dengan mouse
+                let dxMouse = this.x - mouse.x;
+                let dyMouse = this.y - mouse.y;
+                let distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
                 
-                setTimeout(() => particle.remove(), 1000);
+                if (distanceMouse < mouse.radius) {
+                    let angle = Math.atan2(dyMouse, dxMouse);
+                    let force = (mouse.radius - distanceMouse) / mouse.radius * this.repelForce;
+                    this.vx += Math.cos(angle) * force;
+                    this.vy += Math.sin(angle) * force;
+                }
+
+                // Gerak menuju target
+                let dxTarget = this.targetX - this.x;
+                let dyTarget = this.targetY - this.y;
+                this.vx += dxTarget * this.ease;
+                this.vy += dyTarget * this.ease;
+
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+
+                this.x += this.vx;
+                this.y += this.vy;
             }
         }
 
-        // --- HUJAN EMOJI CINTA ---
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        let confetti = [];
-        const confettiSettings = {
-            emojis: ['❤️', '💖', '💕', '😍', '😘'],
-            count: 100, // Jumlah dikurangi agar tidak berat
-        };
+        function initParticles() {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            const imgWidth = sourceImage.width;
+            const imgHeight = sourceImage.height;
 
-        function resetConfetti(p) {
-            p.x = Math.random() * canvas.width;
-            p.y = -20;
-            p.char = confettiSettings.emojis[Math.floor(Math.random() * confettiSettings.emojis.length)];
-            p.size = Math.random() * 20 + 15;
-            p.speed = Math.random() * 2 + 1.5;
-            p.rotation = 0;
-            p.spin = (Math.random() - 0.5) * 6;
-        }
-        
-        for(let i=0; i<confettiSettings.count; i++) {
-            let particle = {};
-            resetConfetti(particle);
-            particle.y = Math.random() * canvas.height;
-            confetti.push(particle);
+            const scale = Math.min((canvas.height * 0.7) / imgHeight, (canvas.width * 0.7) / imgWidth);
+            const scaledWidth = imgWidth * scale;
+            const scaledHeight = imgHeight * scale;
+            
+            tempCanvas.width = scaledWidth;
+            tempCanvas.height = scaledHeight;
+            tempCtx.drawImage(sourceImage, 0, 0, scaledWidth, scaledHeight);
+            const imageData = tempCtx.getImageData(0, 0, scaledWidth, scaledHeight).data;
+
+            const offsetX = (canvas.width - scaledWidth) / 2;
+            const offsetY = (canvas.height - scaledHeight) / 2;
+
+            const density = 4; // Turunkan nilai ini untuk partikel lebih rapat (lebih berat)
+
+            for (let y = 0; y < scaledHeight; y += density) {
+                for (let x = 0; x < scaledWidth; x += density) {
+                    const i = (y * scaledWidth + x) * 4;
+                    if (imageData[i+3] > 128) { // Hanya ambil pixel yang tidak transparan
+                        const r = imageData[i];
+                        const g = imageData[i+1];
+                        const b = imageData[i+2];
+                        const color = `rgb(${r},${g},${b})`;
+                        
+                        // Cek apakah pixel berada di dalam bentuk hati
+                        let heartX = (x - scaledWidth / 2) / (scaledWidth / 2);
+                        let heartY = (y - scaledHeight / 2) / (scaledHeight / 1.8);
+                        
+                        let val = heartX*heartX + Math.pow(1.25*heartY - 1.25*Math.sqrt(Math.abs(heartX)), 2);
+
+                        if (val <= 1) {
+                             particles.push(new Particle(x + offsetX, y + offsetY, color));
+                        }
+                    }
+                }
+            }
         }
 
-        function animateConfetti() {
+        function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            confetti.forEach(p => {
-                p.y += p.speed;
-                p.rotation += p.spin;
-
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation * Math.PI / 180);
-                ctx.font = `${p.size}px Arial`;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(p.char, 0, 0);
-                ctx.restore();
-
-                if (p.y > canvas.height + 20) resetConfetti(p);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
             });
-
-            requestAnimationFrame(animateConfetti);
+            requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', () => {
+        function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            particles = [];
+            if (hasStarted) {
+                initParticles();
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        window.addEventListener('resize', setup);
+        
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
         });
+        
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        window.addEventListener('click', () => {
+            if (hasStarted) return;
+            hasStarted = true;
+            
+            promptEl.style.opacity = '0';
+            
+            // Mulai musik jika belum
+            if (!musicPlaying) {
+                musicButton.click();
+            }
+            
+            initParticles();
+            animate();
+
+            setTimeout(() => {
+                finalMessageEl.style.opacity = '1';
+                finalMessageEl.style.transform = 'translateY(0)';
+            }, 4000); // Pesan muncul setelah partikel mulai berkumpul
+        });
+        
+        sourceImage.onload = setup;
     </script>
 </body>
 </html>
