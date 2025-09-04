@@ -11,7 +11,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Merriweather:ital,wght@0,400;1,400&display-swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Merriweather:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
     
     <!-- Animate.css (Untuk Animasi Konten) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -44,11 +44,30 @@
             inset: 0;
             box-shadow: inset 0 0 15vw rgba(0,0,0,0.5);
             pointer-events: none;
-            z-index: 5;
+            z-index: 10;
+        }
+        #sparkles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
         }
         .font-title { font-family: 'Dancing Script', cursive; }
         .font-handwriting { font-family: 'Caveat', cursive; }
-        .book { transform-style: preserve-3d; position: relative; z-index: 2; touch-action: pan-y; }
+        .book { 
+            transform-style: preserve-3d; 
+            position: relative; 
+            z-index: 2; 
+            touch-action: pan-y;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+        /* PERUBAHAN: State awal buku miring */
+        .book.is-closed-initial {
+            transform: scale(0.9) rotateX(10deg) rotateY(-20deg);
+        }
         .book-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 50px; transform: translateX(-50%); background: linear-gradient(to right, rgba(0,0,0,0.15), rgba(0,0,0,0) 5%, rgba(0,0,0,0) 95%, rgba(0,0,0,0.15)); z-index: 1; }
         .page-leaf { transition: transform var(--duration) cubic-bezier(0.645, 0.045, 0.355, 1); transform-origin: left center; transform-style: preserve-3d; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .page-leaf.is-flipped { transform: rotateY(-180deg); box-shadow: none; }
@@ -64,29 +83,23 @@
         .washi-tape { width: 100px; height: 25px; background-color: rgba(255, 224, 130, 0.7); background-image: linear-gradient(45deg, rgba(251, 191, 36, 0.3) 25%, transparent 25%, transparent 50%, rgba(251, 191, 36, 0.3) 50%, rgba(251, 191, 36, 0.3) 75%, transparent 75%, transparent); background-size: 20px 20px; backdrop-filter: blur(2px); border-left: 2px dashed rgba(255,255,255,0.4); border-right: 2px dashed rgba(255,255,255,0.4); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .sticker { position: absolute; width: 30px; height: 30px; opacity: 0.8; pointer-events: none; }
         #lightbox { transition: opacity 0.3s ease; }
-
-        /* PERBAIKAN: Tampilkan pesan rotasi di mode portrait HP */
-        @media (orientation: portrait) and (max-width: 767px) {
-            #landscape-suggestion {
-                display: flex;
-            }
-        }
+        @media (orientation: portrait) and (max-width: 767px) { #landscape-suggestion { display: flex; } }
     </style>
 </head>
 <body class="flex items-center justify-center h-screen antialiased text-gray-800">
     <div id="vignette-overlay"></div>
+    <canvas id="sparkles-canvas"></canvas>
 
-    <!-- PERBAIKAN: Pesan untuk rotasi perangkat -->
     <div id="landscape-suggestion" class="fixed top-0 left-0 w-full bg-yellow-400 text-black text-sm text-center p-2 z-50 hidden items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M16.466 7.5C15.643 4.237 13.952 2 12 2 9.239 2 7 6.477 7 12s2.239 10 5 10c.342 0 .677-.069 1-.2"/><path d="m21.5 10.5-1.9-1.9-1.9 1.9"/><path d="M3.5 13.5 5.4 15.4l1.9-1.9"/></svg>
         Putar perangkat Anda untuk pengalaman terbaik
     </div>
     
-    <audio id="song" preload="auto" loop></audio>
+    <audio id="song" preload="auto"></audio>
     <audio id="flipSound" src="https://cdn.freesound.org/previews/466/466088_10023392-lq.mp3" preload="auto"></audio>
 
-    <div class="relative w-[95vw] h-[80vh] md:w-[80vw] md:h-[75vh] max-w-5xl max-h-[640px] book transition-opacity duration-1000" id="book">
-        <div class="book-spine hidden md:block"></div>
+    <div class="relative w-[95vw] h-[80vh] md:w-[80vw] md:h-[75vh] max-w-5xl max-h-[640px] book is-closed-initial" id="book">
+        <div class="book-spine"></div>
         <div class="w-full h-full relative perspective-[2500px]" id="page-container"></div>
 
         <div class="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 md:gap-4 z-50">
@@ -103,14 +116,6 @@
         </div>
     </div>
 
-    <div id="end-screen" class="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-50 transition-opacity duration-1000 opacity-0 pointer-events-none">
-        <h2 class="font-title text-5xl md:text-6xl text-white/90 text-center">Terima Kasih</h2>
-        <button id="restart-btn" class="mt-8 bg-white/20 text-white/80 font-bold py-3 px-6 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all">
-            Ulangi
-        </button>
-    </div>
-
-    <!-- Lightbox untuk foto -->
     <div id="lightbox" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
         <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
         <button id="lightbox-close" class="absolute top-4 right-4 text-white text-4xl">&times;</button>
@@ -128,8 +133,6 @@
         const pauseIcon = document.getElementById('pause-icon');
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');
-        const endScreen = document.getElementById('end-screen');
-        const restartBtn = document.getElementById('restart-btn');
         const lightbox = document.getElementById('lightbox');
         const lightboxImg = document.getElementById('lightbox-img');
         const lightboxClose = document.getElementById('lightbox-close');
@@ -178,27 +181,27 @@
             const totalPages = slides.length + 1;
             for (let i = 0; i < totalPages; i++) {
                 const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-1/2 h-full top-0 right-0';
-                const front = document.createElement('div'); front.className = 'page-front absolute w-full h-full bg-white rounded-r-lg flex items-center justify-center p-4 md:p-8';
-                const back = document.createElement('div'); back.className = 'page-back absolute w-full h-full bg-white rounded-l-lg flex items-center justify-center p-4 md:p-8';
+                const front = document.createElement('div'); front.className = 'page-front absolute w-full h-full bg-white rounded-r-lg flex items-center justify-center p-2 md:p-8';
+                const back = document.createElement('div'); back.className = 'page-back absolute w-full h-full bg-white rounded-l-lg flex items-center justify-center p-2 md:p-8';
                 
                 if (i === 0) {
                     const staticCoverBack = document.createElement('div'); staticCoverBack.className = 'absolute w-1/2 h-full top-0 left-0 bg-[#2c3e50] rounded-l-lg shadow-2xl flex items-center justify-center';
-                    staticCoverBack.innerHTML = `<div class='text-center text-white/80 p-4'><p class='font-title text-2xl'>Sebuah Cerita</p></div>`;
+                    staticCoverBack.innerHTML = `<div class='text-center text-white/80 p-4'><p class='font-title text-xl md:text-2xl'>Sebuah Cerita</p></div>`;
                     pageContainer.appendChild(staticCoverBack);
-                    front.classList.remove('bg-white', 'p-4', 'md:p-8'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col', 'rounded-lg');
-                    front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl md:text-6xl text-gold-foil">${story.title}</h1><p class="mt-4 text-white/80">${story.subtitle}</p></div>`;
+                    front.classList.remove('bg-white', 'p-2', 'md:p-8'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col', 'rounded-lg');
+                    front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-3xl md:text-6xl text-gold-foil">${story.title}</h1><p class="mt-2 md:mt-4 text-xs md:text-base text-white/80">${story.subtitle}</p></div>`;
                 }
                 if (i === totalPages - 1) { 
                     back.classList.add('bg-slate-100'); 
-                    back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-3xl md:text-4xl">Tamat</h3></div>`; 
+                    back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-2xl md:text-4xl">Tamat</h3></div>`; 
                 }
                 if (i > 0 && slides[i - 1]) {
-                    front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl md:text-5xl leading-tight animate__animated animate__fadeInRight">${slides[i-1].text}</p></div>`;
+                    front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-2xl md:text-5xl leading-tight animate__animated animate__fadeInRight">${slides[i-1].text}</p></div>`;
                     if (Math.random() > 0.4) front.querySelector('.content-container').innerHTML += getRandomSticker();
                 }
                 if (slides[i]) {
                     const randomRotation = Math.random() * 5 - 2.5;
-                    back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-4 relative"><div class="polaroid animate__animated animate__fadeInLeft relative" style="transform: rotate(${randomRotation}deg); --hover-rotate: ${randomRotation}deg;" data-src="${slides[i].photo}"><div class="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 -rotate-3"></div><img src="${slides[i].photo}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" alt="Scrapbook image" class="w-full h-full object-cover bg-gray-200"></div></div>`;
+                    back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2 md:p-4 relative"><div class="polaroid animate__animated animate__fadeInLeft relative" style="transform: rotate(${randomRotation}deg); --hover-rotate: ${randomRotation}deg;" data-src="${slides[i].photo}"><div class="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 -rotate-3"></div><img src="${slides[i].photo}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" alt="Scrapbook image" class="w-full h-full object-cover bg-gray-200"></div></div>`;
                 }
                 leaf.appendChild(front); leaf.appendChild(back); pageLeaves.push(leaf); pageContainer.appendChild(leaf);
             }
@@ -228,20 +231,43 @@
             if (isOpening || (!isClosing && book.hasAttribute('data-initialized'))) { try { flipSound.currentTime = 0; flipSound.play(); } catch (e) {} }
             if(isClosing) song.pause();
             prevBtn.disabled = currentIndex === 0;
-            nextBtn.disabled = currentIndex >= totalPages -1;
+            nextBtn.disabled = currentIndex >= totalPages - 1;
         }
 
-        function togglePlayPause() { if (song.paused) { if (currentIndex === 0) { showPage(1); } song.play(); } else { song.pause(); } }
+        function togglePlayPause() { 
+            if (song.ended) {
+                song.currentTime = 0;
+            }
+            if (song.paused) { 
+                if (currentIndex === 0) {
+                    book.classList.remove('is-closed-initial');
+                    setTimeout(() => {
+                       showPage(1); 
+                       song.play();
+                    }, 1000); // Tunggu animasi buku selesai
+                } else {
+                   song.play(); 
+                }
+            } else { 
+                song.pause(); 
+            } 
+        }
         
         playPauseBtn.addEventListener('click', togglePlayPause);
         song.addEventListener('play', () => { playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden'); });
         song.addEventListener('pause', () => { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); });
+        song.addEventListener('ended', () => {
+             showPage(0); // PERUBAHAN: Tutup buku
+             setTimeout(() => { // Tambahkan kembali state miring setelah tertutup
+                book.classList.add('is-closed-initial');
+             }, 1200); // PERBAIKAN: Menggunakan nilai numerik langsung
+        });
+
         prevBtn.addEventListener('click', () => showPage(currentIndex - 1));
         nextBtn.addEventListener('click', () => {
             const totalPages = slides.length + 1;
-            if (currentIndex >= totalPages -1) {
-                book.classList.add('opacity-0');
-                endScreen.classList.remove('opacity-0', 'pointer-events-none');
+            if (currentIndex >= totalPages - 1) {
+                song.dispatchEvent(new Event('ended'));
             } else {
                 showPage(currentIndex + 1);
             }
@@ -259,10 +285,9 @@
         });
         progressContainer.addEventListener('click', (e) => { if (song.duration) song.currentTime = (e.offsetX / progressContainer.clientWidth) * song.duration; });
         document.body.addEventListener('mousemove', e => { document.body.style.setProperty('--mouse-x', e.clientX + 'px'); document.body.style.setProperty('--mouse-y', e.clientY + 'px'); });
-        restartBtn.addEventListener('click', () => { location.reload(); });
         
         pageContainer.addEventListener('click', e => {
-            const polaroid = e.target.closest('.polaroid');
+            const polaroid = e.target.closest('div[data-src]');
             if (polaroid) {
                 lightboxImg.src = polaroid.dataset.src;
                 lightbox.classList.remove('opacity-0', 'pointer-events-none');
@@ -277,7 +302,7 @@
             touchEndX = e.changedTouches[0].screenX;
             const totalPages = slides.length + 1;
             if (touchEndX < touchStartX - 50) { // Swipe left
-                if (currentIndex < totalPages -1) showPage(currentIndex + 1);
+                if (currentIndex < totalPages - 1) showPage(currentIndex + 1);
                 else nextBtn.click();
             }
             if (touchEndX > touchStartX + 50) { // Swipe right
@@ -285,10 +310,51 @@
             }
         });
 
+        const canvas = document.getElementById('sparkles-canvas');
+        const ctx = canvas.getContext('2d');
+        let sparkles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createSparkles() {
+            for (let i = 0; i < 50; i++) {
+                sparkles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5 + 0.5,
+                    speed: Math.random() * 0.5 + 0.2,
+                    opacity: Math.random() * 0.5 + 0.2
+                });
+            }
+        }
+
+        function animateSparkles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            sparkles.forEach(sparkle => {
+                sparkle.y -= sparkle.speed;
+                if (sparkle.y < 0) {
+                    sparkle.y = canvas.height;
+                    sparkle.x = Math.random() * canvas.width;
+                }
+                ctx.beginPath();
+                ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 215, 0, ${sparkle.opacity})`;
+                ctx.fill();
+            });
+            requestAnimationFrame(animateSparkles);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.btn').forEach(btn => btn.className = 'w-12 h-12 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700');
             document.querySelector('.btn-play').className = 'w-14 h-14 md:w-16 md:h-16 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-xl hover:bg-rose-600 transition-all duration-300 transform hover:scale-105';
             loadStory();
+            resizeCanvas();
+            createSparkles();
+            animateSparkles();
+            window.addEventListener('resize', resizeCanvas);
         });
     </script>
 </body>
