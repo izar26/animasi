@@ -166,35 +166,38 @@
             pageLeaves = []; pageContainer.innerHTML = ''; isMobile = window.innerWidth < 768; mobilePages = [];
             
             if (isMobile) {
+                mobilePages.push({ type: 'cover', title: story.title, subtitle: story.subtitle });
                 slides.forEach(slide => {
-                    mobilePages.push({ type: 'photo', content: slide.photo, time: slide.time });
-                    mobilePages.push({ type: 'text', content: slide.text, time: slide.time });
+                    mobilePages.push({ type: 'photo', content: slide.photo });
+                    mobilePages.push({ type: 'text', content: slide.text });
                 });
-                const totalPages = mobilePages.length + 1;
+                
+                const totalPages = mobilePages.length;
                 for (let i = 0; i < totalPages; i++) {
-                    const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-full h-full top-0 right-0'; leaf.style.transformOrigin = 'center';
-                    const front = document.createElement('div'); front.className = 'page-front absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
-                    const back = document.createElement('div'); back.className = 'page-back absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
+                    const leaf = document.createElement('div');
+                    leaf.className = 'page-leaf absolute w-full h-full top-0 left-0';
+                    const front = document.createElement('div');
+                    front.className = 'page-front absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
+                    const back = document.createElement('div');
+                    back.className = 'page-back absolute w-full h-full bg-gray-100 rounded-lg';
                     
-                    if (i === 0) {
+                    const page = mobilePages[i];
+                    if (page.type === 'cover') {
                         front.classList.remove('bg-white', 'p-4'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col');
-                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl text-gold-foil">${story.title}</h1><p class="mt-2 text-sm text-white/80">${story.subtitle}</p></div>`;
+                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl text-gold-foil">${page.title}</h1><p class="mt-2 text-sm text-white/80">${page.subtitle}</p></div>`;
+                    } else if (page.type === 'photo') {
+                        front.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn" data-src="${page.content}"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
+                    } else if (page.type === 'text') {
+                        front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
+                        if (Math.random() > 0.4) front.querySelector('.content-container').innerHTML += getRandomSticker();
                     }
-                    if (mobilePages[i-1]) {
-                        const page = mobilePages[i-1];
-                        if (page.type === 'photo') front.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn" data-src="${page.content}"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
-                        else front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
-                    }
-                     if (mobilePages[i]) {
-                        const page = mobilePages[i];
-                        if (page.type === 'photo') back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn" data-src="${page.content}"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
-                        else back.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
-                    }
-                    if (i === totalPages - 1) { back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-3xl">Tamat</h3></div>`; }
 
-                    leaf.appendChild(front); leaf.appendChild(back); pageLeaves.push(leaf); pageContainer.appendChild(leaf);
+                    leaf.appendChild(front);
+                    leaf.appendChild(back);
+                    pageLeaves.push(leaf);
+                    pageContainer.appendChild(leaf);
                 }
-            } else {
+            } else { // Desktop Logic
                 const totalPages = slides.length + 1;
                 for (let i = 0; i < totalPages; i++) {
                     const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-1/2 h-full top-0 right-0';
@@ -221,28 +224,28 @@
             }
         }
         function getRandomSticker() { const sticker = stickers[Math.floor(Math.random() * stickers.length)]; const top = Math.random() * 80 + 10; const left = Math.random() * 80 + 10; const rot = Math.random() * 60 - 30; return `<div style="top: ${top}%; left: ${left}%; transform: rotate(${rot}deg);">${sticker}</div>`; }
+        
         function showPage(targetIndex) {
-            const totalPages = isMobile ? mobilePages.length + 1 : slides.length + 1;
+            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
             if (targetIndex < 0 || targetIndex > totalPages) return;
-            const isClosing = targetIndex === 0; const isOpening = currentIndex === 0 && targetIndex > 0;
+            
+            const isClosing = targetIndex === 0; 
+            const isOpening = currentIndex === 0 && targetIndex > 0;
             currentIndex = targetIndex;
+
             pageLeaves.forEach((leaf, index) => {
-                let flipCondition;
-                if (isMobile) {
-                    flipCondition = index < currentIndex;
-                } else {
-                    flipCondition = index < currentIndex;
-                }
-                leaf.classList.toggle('is-flipped', flipCondition);
-                leaf.style.zIndex = index < currentIndex ? index + 2 : totalPages - index;
-                const isCurrent = isMobile ? (index === currentIndex -1) : (index === currentIndex - 1) || (index === currentIndex);
-                leaf.querySelectorAll('.page-front, .page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
+                leaf.classList.toggle('is-flipped', index < currentIndex);
+                leaf.style.zIndex = totalPages - index;
+                const isCurrent = isMobile ? (index === currentIndex) : ((index === currentIndex - 1) || (index === currentIndex));
+                 leaf.querySelectorAll('.page-front').forEach(p => p.classList.toggle('is-current', isCurrent));
+                 if(!isMobile) leaf.querySelectorAll('.page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
             });
             if (isOpening || (!isClosing && book.hasAttribute('data-initialized'))) { try { flipSound.currentTime = 0; flipSound.play(); } catch (e) {} }
             if(isClosing) song.pause();
             prevBtn.disabled = currentIndex === 0;
             nextBtn.disabled = currentIndex >= totalPages;
         }
+
         function togglePlayPause() { if (song.paused) { if (currentIndex === 0) { showPage(1); } song.play(); } else { song.pause(); } }
         
         playPauseBtn.addEventListener('click', togglePlayPause);
@@ -250,7 +253,7 @@
         song.addEventListener('pause', () => { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); });
         prevBtn.addEventListener('click', () => showPage(currentIndex - 1));
         nextBtn.addEventListener('click', () => {
-            const totalPages = isMobile ? mobilePages.length + 1 : slides.length + 1;
+            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
             if (currentIndex >= totalPages) {
                 book.classList.add('opacity-0');
                 endScreen.classList.remove('opacity-0', 'pointer-events-none');
@@ -287,7 +290,7 @@
         book.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
         book.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
-            const totalPages = isMobile ? mobilePages.length + 1 : slides.length + 1;
+            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
             if (touchEndX < touchStartX - 50) { // Swipe left
                 if (currentIndex < totalPages) showPage(currentIndex + 1);
                 else nextBtn.click();
