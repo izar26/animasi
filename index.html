@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Karna Kamu Cantik — Scrapbook 3D (Versi Responsif)</title>
+    <title>Karna Kamu Cantik — Scrapbook 3D (Versi Final)</title>
 
     <!-- Tailwind CSS (Untuk Desain Modern) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -48,7 +48,7 @@
         }
         .font-title { font-family: 'Dancing Script', cursive; }
         .font-handwriting { font-family: 'Caveat', cursive; }
-        .book { transform-style: preserve-3d; position: relative; z-index: 2; }
+        .book { transform-style: preserve-3d; position: relative; z-index: 2; touch-action: pan-y; } /* touch-action ditambahkan */
         .book-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 50px; transform: translateX(-50%); background: linear-gradient(to right, rgba(0,0,0,0.15), rgba(0,0,0,0) 5%, rgba(0,0,0,0) 95%, rgba(0,0,0,0.15)); z-index: 1; }
         .page-leaf { transition: transform var(--duration) cubic-bezier(0.645, 0.045, 0.355, 1); transform-origin: left center; transform-style: preserve-3d; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .page-leaf.is-flipped { transform: rotateY(-180deg); box-shadow: none; }
@@ -56,43 +56,22 @@
         .page-back { transform: rotateY(180deg); }
         .content-container .animated { visibility: hidden; }
         .is-current .content-container .animated { visibility: visible; }
-        .polaroid { background: #fff; padding: 0.5rem; padding-bottom: 3rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border-radius: 4px; position: relative; transition: transform 0.3s ease; }
+        .polaroid { background: #fff; padding: 0.5rem; padding-bottom: 3rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border-radius: 4px; position: relative; transition: transform 0.3s ease; cursor: pointer; }
         @media (min-width: 768px) { .polaroid { padding: 1rem; padding-bottom: 3.5rem; } }
         .polaroid:hover { transform: scale(1.03) rotate(var(--hover-rotate, 0deg)) !important; z-index: 10; }
         .text-gold-foil { background: linear-gradient(100deg, #d2b48c, #fff, #b8860b, #fff, #d2b48c); background-size: 200% 200%; color: transparent; background-clip: text; -webkit-background-clip: text; animation: gold-shine 5s linear infinite; }
         @keyframes gold-shine { 0% { background-position: 200% center; } 100% { background-position: 0% center; } }
         .washi-tape { width: 100px; height: 25px; background-color: rgba(255, 224, 130, 0.7); background-image: linear-gradient(45deg, rgba(251, 191, 36, 0.3) 25%, transparent 25%, transparent 50%, rgba(251, 191, 36, 0.3) 50%, rgba(251, 191, 36, 0.3) 75%, transparent 75%, transparent); background-size: 20px 20px; backdrop-filter: blur(2px); border-left: 2px dashed rgba(255,255,255,0.4); border-right: 2px dashed rgba(255,255,255,0.4); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .sticker { position: absolute; width: 30px; height: 30px; opacity: 0.8; pointer-events: none; }
-
-        /* Page Curl Effect - Hanya untuk perangkat dengan hover */
-        @media (hover: hover) {
-            .page-front::after, .page-back::after {
-                content: '';
-                position: absolute;
-                bottom: 5px; right: 5px;
-                width: 50px; height: 50px;
-                background: linear-gradient(315deg, #fff 45%, transparent 70%);
-                box-shadow: -5px -5px 10px rgba(0,0,0,0.1);
-                border-radius: 0 0 100% 0;
-                opacity: 0;
-                transition: opacity 0.4s ease, transform 0.4s ease;
-                transform: scale(0);
-                transform-origin: bottom right;
-            }
-            .page-curl .page-front::after, .page-curl .page-back::after {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
+        #lightbox { transition: opacity 0.3s ease; }
     </style>
 </head>
 <body class="flex items-center justify-center h-screen antialiased text-gray-800">
     <div id="vignette-overlay"></div>
     
-    <audio id="song" preload="auto" loop><source src="Kamu Cantik Kamu Baik [3-nltyvgLfY].mp3" type="audio/mpeg"></audio>
+    <audio id="song" preload="auto" loop></audio>
     <audio id="flipSound" src="https://cdn.freesound.org/previews/466/466088_10023392-lq.mp3" preload="auto"></audio>
 
-    <!-- STRUKTUR BUKU UTAMA - Kelas responsif ditambahkan -->
     <div class="relative w-[90vw] h-[70vh] md:w-[80vw] md:h-[75vh] max-w-5xl max-h-[640px] book transition-opacity duration-1000" id="book">
         <div class="book-spine hidden md:block"></div>
         <div class="w-full h-full relative perspective-[2500px]" id="page-container"></div>
@@ -112,10 +91,16 @@
     </div>
 
     <div id="end-screen" class="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-50 transition-opacity duration-1000 opacity-0 pointer-events-none">
-        <h2 class="font-title text-5xl md:text-6xl text-white/90">Terima Kasih</h2>
+        <h2 class="font-title text-5xl md:text-6xl text-white/90 text-center">Terima Kasih</h2>
         <button id="restart-btn" class="mt-8 bg-white/20 text-white/80 font-bold py-3 px-6 rounded-lg backdrop-blur-sm hover:bg-white/30 transition-all">
             Ulangi
         </button>
+    </div>
+
+    <!-- Lightbox untuk foto -->
+    <div id="lightbox" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
+        <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        <button id="lightbox-close" class="absolute top-4 right-4 text-white text-4xl">&times;</button>
     </div>
 
     <script>
@@ -132,55 +117,90 @@
         const progressBar = document.getElementById('progress-bar');
         const endScreen = document.getElementById('end-screen');
         const restartBtn = document.getElementById('restart-btn');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.getElementById('lightbox-close');
         
-        const slides = [ { time: 5, photo: "https://images.unsplash.com/photo-1527498332219-a31a98a0128b?q=80&w=1974", text: "Kumulai lagu ini dengan bernyanyi, membuka lembar pertama cerita kita." }, { time: 10, photo: "https://images.unsplash.com/photo-1494959764136-6be9eb3c271e?q=80&w=2070", text: "Waktu seakan berhenti, saat khayal menari-nari dalam pikiran." }, { time: 15, photo: "https://images.unsplash.com/photo-1541884358-75d475586b3a?q=80&w=1935", text: "Aku hanyut... ke dalam pusaran senyummu yang paling manis." }, { time: 20, photo: "https://images.unsplash.com/photo-1546238232-20216dec9f72?q=80&w=1887", text: "Tak peduli lagi jika langit biru menertawakan tingkahku." }, { time: 25, photo: "https://images.unsplash.com/photo-1502809737437-1d85c70dd2ca?q=80&w=1887", text: "Karena kau telah mencuri hatiku, mimpiku, dan semua rinduku." }, { time: 30, photo: "https://images.unsplash.com/photo-1523626752472-b55a628f1acc?q=80&w=1887", text: "Semua ini... <br><strong class='text-3xl md:text-5xl'>Kar'na Kamu Cantik.</strong>" }, { time: 35, photo: "https://images.unsplash.com/photo-1559526324-c1f275fbfa32?q=80&w=1770", text: "Akan 'ku beri segalanya, semua yang aku punya, untukmu." }, { time: 40, photo: "https://images.unsplash.com/photo-1561994685-711a9f383a8e?q=80&w=1887", text: "Dan juga karena <strong class='text-3xl md:text-5xl'>Hatimu Baik.</strong>" }, { time: 45, photo: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070", text: "Sempurnalah duniaku ini, hanya saat kau ada di sisiku." }, { time: 50, photo: "https://images.unsplash.com/photo-1529324673163-470014243924?q=80&w=1887", text: "Bukan karena riasan yang menghiasi indah wajahmu." }, { time: 55, photo: "https://images.unsplash.com/photo-1611784728555-5b6028a7f02d?q=80&w=1887", text: "Atau lipstik merah merona yang ada di bibirmu itu." }, { time: 60, photo: "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=1887", text: "Kelembutan hati dan setiap tutur katamu..." }, { time: 65, photo: "https://images.unsplash.com/photo-1543286386-713bdd548da4?q=80&w=2070", text: "...yang menciptakan cinta sejati yang selalu kupuja." }, { time: 70, photo: "https://images.unsplash.com/photo-1508209215843-2d5d8a25c782?q=80&w=1887", text: "Terima kasih telah menjadi bagian terindah dalam hidupku. ❤️" } ];
+        let slides = [];
         let currentIndex = 0;
         let pageLeaves = [];
         let isMobile = false;
         let mobilePages = [];
 
         const stickers = [ `<svg class="sticker" viewBox="0 0 24 24" fill="rgba(239, 68, 68, 0.7)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`, `<svg class="sticker" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.7)"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>` ];
+        
+        // PERUBAHAN: Data cerita sekarang ada di sini, bukan di file eksternal
+        const storyData = {
+            "title": "Karna Kamu Cantik",
+            "subtitle": "Sebuah Scrapbook Digital",
+            "songUrl": "Kamu Cantik Kamu Baik [3-nltyvgLfY].mp3",
+            "slides": [
+                { "time": 5, "photo": "https://images.unsplash.com/photo-1527498332219-a31a98a0128b?q=80&w=1974", "text": "Kumulai lagu ini dengan bernyanyi, membuka lembar pertama cerita kita." },
+                { "time": 10, "photo": "https://images.unsplash.com/photo-1494959764136-6be9eb3c271e?q=80&w=2070", "text": "Waktu seakan berhenti, saat khayal menari-nari dalam pikiran." },
+                { "time": 15, "photo": "https://images.unsplash.com/photo-1541884358-75d475586b3a?q=80&w=1935", "text": "Aku hanyut... ke dalam pusaran senyummu yang paling manis." },
+                { "time": 20, "photo": "https://images.unsplash.com/photo-1546238232-20216dec9f72?q=80&w=1887", "text": "Tak peduli lagi jika langit biru menertawakan tingkahku." },
+                { "time": 25, "photo": "https://images.unsplash.com/photo-1502809737437-1d85c70dd2ca?q=80&w=1887", "text": "Karena kau telah mencuri hatiku, mimpiku, dan semua rinduku." },
+                { "time": 30, "photo": "https://images.unsplash.com/photo-1523626752472-b55a628f1acc?q=80&w=1887", "text": "Semua ini... <br><strong class='text-3xl md:text-5xl'>Kar'na Kamu Cantik.</strong>" },
+                { "time": 35, "photo": "https://images.unsplash.com/photo-1559526324-c1f275fbfa32?q=80&w=1770", "text": "Akan 'ku beri segalanya, semua yang aku punya, untukmu." },
+                { "time": 40, "photo": "https://images.unsplash.com/photo-1561994685-711a9f383a8e?q=80&w=1887", "text": "Dan juga karena <strong class='text-3xl md:text-5xl'>Hatimu Baik.</strong>" },
+                { "time": 45, "photo": "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2070", "text": "Sempurnalah duniaku ini, hanya saat kau ada di sisiku." },
+                { "time": 50, "photo": "https://images.unsplash.com/photo-1529324673163-470014243924?q=80&w=1887", "text": "Bukan karena riasan yang menghiasi indah wajahmu." },
+                { "time": 55, "photo": "https://images.unsplash.com/photo-1611784728555-5b6028a7f02d?q=80&w=1887", "text": "Atau lipstik merah merona yang ada di bibirmu itu." },
+                { "time": 60, "photo": "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=1887", "text": "Kelembutan hati dan setiap tutur katamu..." },
+                { "time": 65, "photo": "https://images.unsplash.com/photo-1543286386-713bdd548da4?q=80&w=2070", "text": "...yang menciptakan cinta sejati yang selalu kupuja." },
+                { "time": 70, "photo": "https://images.unsplash.com/photo-1508209215843-2d5d8a25c782?q=80&w=1887", "text": "Terima kasih telah menjadi bagian terindah dalam hidupku. ❤️" }
+            ]
+        };
 
-        function createBook() {
+        // PERUBAHAN: Fungsi ini tidak lagi 'async' dan langsung menggunakan objek 'storyData'
+        function loadStory() {
+            try {
+                const data = storyData;
+                slides = data.slides;
+                song.src = data.songUrl;
+                createBook(data);
+                showPage(0);
+                book.setAttribute('data-initialized', 'true');
+            } catch (error) {
+                console.error(error);
+                pageContainer.innerHTML = `<div class="text-white text-center p-8">Gagal memuat cerita.<br>Silakan coba lagi.</div>`;
+            }
+        }
+
+        // PERUBAHAN: Fungsi ini sekarang menerima objek 'story' untuk mengisi judul
+        function createBook(story) {
             pageLeaves = []; pageContainer.innerHTML = ''; isMobile = window.innerWidth < 768; mobilePages = [];
             
-            // LOGIKA BARU UNTUK MODE MOBILE
             if (isMobile) {
                 slides.forEach(slide => {
                     mobilePages.push({ type: 'photo', content: slide.photo, time: slide.time });
                     mobilePages.push({ type: 'text', content: slide.text, time: slide.time });
                 });
-                const totalPages = mobilePages.length + 1; // +1 untuk cover
+                const totalPages = mobilePages.length + 1;
                 for (let i = 0; i < totalPages; i++) {
-                    const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-full h-full top-0 right-0'; leaf.style.transformOrigin = 'center'; // Balik dari tengah
+                    const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-full h-full top-0 right-0'; leaf.style.transformOrigin = 'center';
                     const front = document.createElement('div'); front.className = 'page-front absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
                     const back = document.createElement('div'); back.className = 'page-back absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
                     
                     if (i === 0) {
                         front.classList.remove('bg-white', 'p-4'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col');
-                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl text-gold-foil">Karna Kamu Cantik</h1><p class="mt-2 text-sm text-white/80">Sebuah Scrapbook Digital</p></div>`;
+                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl text-gold-foil">${story.title}</h1><p class="mt-2 text-sm text-white/80">${story.subtitle}</p></div>`;
                     }
                     if (mobilePages[i-1]) {
                         const page = mobilePages[i-1];
-                        if (page.type === 'photo') {
-                             front.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
-                        } else {
-                             front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
-                        }
+                        if (page.type === 'photo') front.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn" data-src="${page.content}"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
+                        else front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
                     }
                      if (mobilePages[i]) {
                         const page = mobilePages[i];
-                        if (page.type === 'photo') {
-                             back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
-                        } else {
-                             back.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
-                        }
+                        if (page.type === 'photo') back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn" data-src="${page.content}"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
+                        else back.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
                     }
                     if (i === totalPages - 1) { back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-3xl">Tamat</h3></div>`; }
 
                     leaf.appendChild(front); leaf.appendChild(back); pageLeaves.push(leaf); pageContainer.appendChild(leaf);
                 }
-            } else { // LOGIKA LAMA UNTUK DESKTOP
+            } else {
                 const totalPages = slides.length + 1;
                 for (let i = 0; i < totalPages; i++) {
                     const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-1/2 h-full top-0 right-0';
@@ -191,7 +211,7 @@
                         staticCoverBack.innerHTML = `<div class='text-center text-white/80 p-4'><p class='font-title text-2xl'>Sebuah Cerita</p></div>`;
                         pageContainer.appendChild(staticCoverBack);
                         front.classList.remove('bg-white', 'p-4', 'md:p-8'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col', 'rounded-lg');
-                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl md:text-6xl text-gold-foil">Karna Kamu Cantik</h1><p class="mt-4 text-white/80">Sebuah Scrapbook Digital</p></div>`;
+                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl md:text-6xl text-gold-foil">${story.title}</h1><p class="mt-4 text-white/80">${story.subtitle}</p></div>`;
                     }
                     if (i === totalPages - 1) { back.classList.add('bg-slate-100'); back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-3xl md:text-4xl">Tamat</h3></div>`; }
                     if (i > 0 && slides[i - 1]) {
@@ -200,30 +220,28 @@
                     }
                     if (slides[i]) {
                         const randomRotation = Math.random() * 5 - 2.5;
-                        back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-4 relative"><div class="polaroid animate__animated animate__fadeInLeft relative" style="transform: rotate(${randomRotation}deg); --hover-rotate: ${randomRotation}deg;"><div class="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 -rotate-3"></div><img src="${slides[i].photo}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" alt="Scrapbook image" class="w-full h-full object-cover bg-gray-200"></div></div>`;
+                        back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-4 relative"><div class="polaroid animate__animated animate__fadeInLeft relative" style="transform: rotate(${randomRotation}deg); --hover-rotate: ${randomRotation}deg;" data-src="${slides[i].photo}"><div class="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 -rotate-3"></div><img src="${slides[i].photo}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" alt="Scrapbook image" class="w-full h-full object-cover bg-gray-200"></div></div>`;
                     }
                     leaf.appendChild(front); leaf.appendChild(back); pageLeaves.push(leaf); pageContainer.appendChild(leaf);
-                    leaf.addEventListener('mouseenter', () => leaf.classList.add('page-curl'));
-                    leaf.addEventListener('mouseleave', () => leaf.classList.remove('page-curl'));
                 }
             }
         }
         function getRandomSticker() { const sticker = stickers[Math.floor(Math.random() * stickers.length)]; const top = Math.random() * 80 + 10; const left = Math.random() * 80 + 10; const rot = Math.random() * 60 - 30; return `<div style="top: ${top}%; left: ${left}%; transform: rotate(${rot}deg);">${sticker}</div>`; }
         function showPage(targetIndex) {
-            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
+            const totalPages = isMobile ? mobilePages.length + 1 : slides.length + 1;
             if (targetIndex < 0 || targetIndex > totalPages) return;
             const isClosing = targetIndex === 0; const isOpening = currentIndex === 0 && targetIndex > 0;
             currentIndex = targetIndex;
             pageLeaves.forEach((leaf, index) => {
-                const flipIndex = isMobile ? Math.ceil(index / 2) : index;
-                leaf.classList.toggle('is-flipped', flipIndex < Math.ceil(currentIndex / 2));
-                
+                let flipCondition;
                 if (isMobile) {
-                    leaf.style.zIndex = index < currentIndex ? index + 2 : totalPages - index;
+                    flipCondition = index < currentIndex;
                 } else {
-                    leaf.style.zIndex = index < currentIndex ? index + 2 : totalPages - index;
+                    flipCondition = index < currentIndex;
                 }
-                const isCurrent = isMobile ? (index === currentIndex -1 || index === currentIndex) : (index === currentIndex - 1) || (index === currentIndex);
+                leaf.classList.toggle('is-flipped', flipCondition);
+                leaf.style.zIndex = index < currentIndex ? index + 2 : totalPages - index;
+                const isCurrent = isMobile ? (index === currentIndex -1) : (index === currentIndex - 1) || (index === currentIndex);
                 leaf.querySelectorAll('.page-front, .page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
             });
             if (isOpening || (!isClosing && book.hasAttribute('data-initialized'))) { try { flipSound.currentTime = 0; flipSound.play(); } catch (e) {} }
@@ -232,12 +250,13 @@
             nextBtn.disabled = currentIndex >= totalPages;
         }
         function togglePlayPause() { if (song.paused) { if (currentIndex === 0) { showPage(1); } song.play(); } else { song.pause(); } }
+        
         playPauseBtn.addEventListener('click', togglePlayPause);
         song.addEventListener('play', () => { playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden'); });
         song.addEventListener('pause', () => { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); });
         prevBtn.addEventListener('click', () => showPage(currentIndex - 1));
         nextBtn.addEventListener('click', () => {
-            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
+            const totalPages = isMobile ? mobilePages.length + 1 : slides.length + 1;
             if (currentIndex >= totalPages) {
                 book.classList.add('opacity-0');
                 endScreen.classList.remove('opacity-0', 'pointer-events-none');
@@ -246,11 +265,11 @@
             }
         });
         song.addEventListener('timeupdate', () => {
-            if (song.duration) { progressBar.style.width = `${(song.currentTime / song.duration) * 100}%`; }
+            if (!song.duration) return;
+            progressBar.style.width = `${(song.currentTime / song.duration) * 100}%`;
             if (song.paused) return;
             let slideIndex = -1;
             for (let i = 0; i < slides.length; i++) { if (song.currentTime >= slides[i].time) slideIndex = i; }
-            
             if (slideIndex > -1) {
                 const newTargetPage = isMobile ? (slideIndex * 2) + 1 : slideIndex + 1;
                 if (newTargetPage !== currentIndex) showPage(newTargetPage);
@@ -259,12 +278,35 @@
         progressContainer.addEventListener('click', (e) => { if (song.duration) song.currentTime = (e.offsetX / progressContainer.clientWidth) * song.duration; });
         document.body.addEventListener('mousemove', e => { document.body.style.setProperty('--mouse-x', e.clientX + 'px'); document.body.style.setProperty('--mouse-y', e.clientY + 'px'); });
         restartBtn.addEventListener('click', () => { location.reload(); });
+        
+        pageContainer.addEventListener('click', e => {
+            const polaroid = e.target.closest('.polaroid');
+            if (polaroid) {
+                lightboxImg.src = polaroid.dataset.src;
+                lightbox.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        });
+        lightboxClose.addEventListener('click', () => lightbox.classList.add('opacity-0', 'pointer-events-none'));
+        lightbox.addEventListener('click', () => lightbox.classList.add('opacity-0', 'pointer-events-none'));
+
+        let touchStartX = 0; let touchEndX = 0;
+        book.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+        book.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            const totalPages = isMobile ? mobilePages.length + 1 : slides.length + 1;
+            if (touchEndX < touchStartX - 50) { // Swipe left
+                if (currentIndex < totalPages) showPage(currentIndex + 1);
+                else nextBtn.click();
+            }
+            if (touchEndX > touchStartX + 50) { // Swipe right
+                if (currentIndex > 0) showPage(currentIndex - 1);
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.btn').forEach(btn => btn.className = 'w-12 h-12 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700');
             document.querySelector('.btn-play').className = 'w-14 h-14 md:w-16 md:h-16 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-xl hover:bg-rose-600 transition-all duration-300 transform hover:scale-105';
-            createBook();
-            showPage(0);
-            book.setAttribute('data-initialized', 'true');
+            loadStory();
         });
     </script>
 </body>
