@@ -11,7 +11,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Merriweather:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Dancing+Script:wght@700&family=Merriweather:ital,wght@0,400;1,400&display-swap" rel="stylesheet">
     
     <!-- Animate.css (Untuk Animasi Konten) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -64,15 +64,28 @@
         .washi-tape { width: 100px; height: 25px; background-color: rgba(255, 224, 130, 0.7); background-image: linear-gradient(45deg, rgba(251, 191, 36, 0.3) 25%, transparent 25%, transparent 50%, rgba(251, 191, 36, 0.3) 50%, rgba(251, 191, 36, 0.3) 75%, transparent 75%, transparent); background-size: 20px 20px; backdrop-filter: blur(2px); border-left: 2px dashed rgba(255,255,255,0.4); border-right: 2px dashed rgba(255,255,255,0.4); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .sticker { position: absolute; width: 30px; height: 30px; opacity: 0.8; pointer-events: none; }
         #lightbox { transition: opacity 0.3s ease; }
+
+        /* PERBAIKAN: Tampilkan pesan rotasi di mode portrait HP */
+        @media (orientation: portrait) and (max-width: 767px) {
+            #landscape-suggestion {
+                display: flex;
+            }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center h-screen antialiased text-gray-800">
     <div id="vignette-overlay"></div>
+
+    <!-- PERBAIKAN: Pesan untuk rotasi perangkat -->
+    <div id="landscape-suggestion" class="fixed top-0 left-0 w-full bg-yellow-400 text-black text-sm text-center p-2 z-50 hidden items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M16.466 7.5C15.643 4.237 13.952 2 12 2 9.239 2 7 6.477 7 12s2.239 10 5 10c.342 0 .677-.069 1-.2"/><path d="m21.5 10.5-1.9-1.9-1.9 1.9"/><path d="M3.5 13.5 5.4 15.4l1.9-1.9"/></svg>
+        Putar perangkat Anda untuk pengalaman terbaik
+    </div>
     
     <audio id="song" preload="auto" loop></audio>
     <audio id="flipSound" src="https://cdn.freesound.org/previews/466/466088_10023392-lq.mp3" preload="auto"></audio>
 
-    <div class="relative w-[90vw] h-[70vh] md:w-[80vw] md:h-[75vh] max-w-5xl max-h-[640px] book transition-opacity duration-1000" id="book">
+    <div class="relative w-[95vw] h-[80vh] md:w-[80vw] md:h-[75vh] max-w-5xl max-h-[640px] book transition-opacity duration-1000" id="book">
         <div class="book-spine hidden md:block"></div>
         <div class="w-full h-full relative perspective-[2500px]" id="page-container"></div>
 
@@ -124,8 +137,6 @@
         let slides = [];
         let currentIndex = 0;
         let pageLeaves = [];
-        let isMobile = false;
-        let mobilePages = [];
 
         const stickers = [ `<svg class="sticker" viewBox="0 0 24 24" fill="rgba(239, 68, 68, 0.7)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`, `<svg class="sticker" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.7)"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>` ];
         
@@ -162,74 +173,41 @@
         }
 
         function createBook(story) {
-            pageLeaves = []; pageContainer.innerHTML = ''; isMobile = window.innerWidth < 768; mobilePages = [];
+            pageLeaves = []; pageContainer.innerHTML = '';
             
-            if (isMobile) {
-                mobilePages.push({ type: 'cover', title: story.title, subtitle: story.subtitle });
-                slides.forEach(slide => {
-                    mobilePages.push({ type: 'photo', content: slide.photo });
-                    mobilePages.push({ type: 'text', content: slide.text });
-                });
+            const totalPages = slides.length + 1;
+            for (let i = 0; i < totalPages; i++) {
+                const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-1/2 h-full top-0 right-0';
+                const front = document.createElement('div'); front.className = 'page-front absolute w-full h-full bg-white rounded-r-lg flex items-center justify-center p-4 md:p-8';
+                const back = document.createElement('div'); back.className = 'page-back absolute w-full h-full bg-white rounded-l-lg flex items-center justify-center p-4 md:p-8';
                 
-                const totalPages = mobilePages.length;
-                for (let i = 0; i < totalPages; i++) {
-                    const leaf = document.createElement('div');
-                    leaf.className = 'page-leaf absolute w-full h-full top-0 left-0';
-                    leaf.style.transformOrigin = 'center';
-                    
-                    const front = document.createElement('div');
-                    front.className = 'page-front absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
-                    
-                    const back = document.createElement('div');
-                    back.className = 'page-back absolute w-full h-full bg-gray-100 rounded-lg';
-                    
-                    const page = mobilePages[i];
-                    if (page.type === 'cover') {
-                        front.classList.remove('bg-white', 'p-4'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col');
-                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl text-gold-foil">${page.title}</h1><p class="mt-2 text-sm text-white/80">${page.subtitle}</p></div>`;
-                    } else if (page.type === 'photo') {
-                        front.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-2"><div class="polaroid animate__animated animate__fadeIn" data-src="${page.content}"><img src="${page.content}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" class="w-full h-full object-cover bg-gray-200"></div></div>`;
-                    } else if (page.type === 'text') {
-                        front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl leading-tight animate__animated animate__fadeIn">${page.content}</p></div>`;
-                        if (Math.random() > 0.4) front.querySelector('.content-container').innerHTML += getRandomSticker();
-                    }
-
-                    leaf.appendChild(front);
-                    leaf.appendChild(back);
-                    pageLeaves.push(leaf);
-                    pageContainer.appendChild(leaf);
+                if (i === 0) {
+                    const staticCoverBack = document.createElement('div'); staticCoverBack.className = 'absolute w-1/2 h-full top-0 left-0 bg-[#2c3e50] rounded-l-lg shadow-2xl flex items-center justify-center';
+                    staticCoverBack.innerHTML = `<div class='text-center text-white/80 p-4'><p class='font-title text-2xl'>Sebuah Cerita</p></div>`;
+                    pageContainer.appendChild(staticCoverBack);
+                    front.classList.remove('bg-white', 'p-4', 'md:p-8'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col', 'rounded-lg');
+                    front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl md:text-6xl text-gold-foil">${story.title}</h1><p class="mt-4 text-white/80">${story.subtitle}</p></div>`;
                 }
-            } else { // Desktop Logic
-                const totalPages = slides.length + 1;
-                for (let i = 0; i < totalPages; i++) {
-                    const leaf = document.createElement('div'); leaf.className = 'page-leaf absolute w-1/2 h-full top-0 right-0';
-                    const front = document.createElement('div'); front.className = 'page-front absolute w-full h-full bg-white rounded-r-lg flex items-center justify-center p-4 md:p-8';
-                    const back = document.createElement('div'); back.className = 'page-back absolute w-full h-full bg-white rounded-l-lg flex items-center justify-center p-4 md:p-8';
-                    if (i === 0) {
-                        const staticCoverBack = document.createElement('div'); staticCoverBack.className = 'absolute w-1/2 h-full top-0 left-0 bg-[#2c3e50] rounded-l-lg shadow-2xl flex items-center justify-center';
-                        staticCoverBack.innerHTML = `<div class='text-center text-white/80 p-4'><p class='font-title text-2xl'>Sebuah Cerita</p></div>`;
-                        pageContainer.appendChild(staticCoverBack);
-                        front.classList.remove('bg-white', 'p-4', 'md:p-8'); front.classList.add('bg-[#34495e]', 'text-white', 'flex-col', 'rounded-lg');
-                        front.innerHTML = `<div class="text-center p-4"><h1 class="font-title text-4xl md:text-6xl text-gold-foil">${story.title}</h1><p class="mt-4 text-white/80">${story.subtitle}</p></div>`;
-                    }
-                    if (i === totalPages - 1) { back.classList.add('bg-slate-100'); back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-3xl md:text-4xl">Tamat</h3></div>`; }
-                    if (i > 0 && slides[i - 1]) {
-                        front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl md:text-5xl leading-tight animate__animated animate__fadeInRight">${slides[i-1].text}</p></div>`;
-                        if (Math.random() > 0.4) front.querySelector('.content-container').innerHTML += getRandomSticker();
-                    }
-                    if (slides[i]) {
-                        const randomRotation = Math.random() * 5 - 2.5;
-                        back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-4 relative"><div class="polaroid animate__animated animate__fadeInLeft relative" style="transform: rotate(${randomRotation}deg); --hover-rotate: ${randomRotation}deg;" data-src="${slides[i].photo}"><div class="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 -rotate-3"></div><img src="${slides[i].photo}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" alt="Scrapbook image" class="w-full h-full object-cover bg-gray-200"></div></div>`;
-                    }
-                    leaf.appendChild(front); leaf.appendChild(back); pageLeaves.push(leaf); pageContainer.appendChild(leaf);
+                if (i === totalPages - 1) { 
+                    back.classList.add('bg-slate-100'); 
+                    back.innerHTML = `<div class="p-4 text-center"><h3 class="font-title text-3xl md:text-4xl">Tamat</h3></div>`; 
                 }
+                if (i > 0 && slides[i - 1]) {
+                    front.innerHTML = `<div class="content-container text-center w-full h-full flex flex-col justify-center relative"><p class="font-handwriting text-3xl md:text-5xl leading-tight animate__animated animate__fadeInRight">${slides[i-1].text}</p></div>`;
+                    if (Math.random() > 0.4) front.querySelector('.content-container').innerHTML += getRandomSticker();
+                }
+                if (slides[i]) {
+                    const randomRotation = Math.random() * 5 - 2.5;
+                    back.innerHTML = `<div class="content-container w-full h-full flex items-center justify-center p-4 relative"><div class="polaroid animate__animated animate__fadeInLeft relative" style="transform: rotate(${randomRotation}deg); --hover-rotate: ${randomRotation}deg;" data-src="${slides[i].photo}"><div class="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 -rotate-3"></div><img src="${slides[i].photo}" onerror="this.onerror=null;this.src='https://placehold.co/600x800/e2e8f0/94a3b8?text=Gagal+Muat';" alt="Scrapbook image" class="w-full h-full object-cover bg-gray-200"></div></div>`;
+                }
+                leaf.appendChild(front); leaf.appendChild(back); pageLeaves.push(leaf); pageContainer.appendChild(leaf);
             }
         }
         function getRandomSticker() { const sticker = stickers[Math.floor(Math.random() * stickers.length)]; const top = Math.random() * 80 + 10; const left = Math.random() * 80 + 10; const rot = Math.random() * 60 - 30; return `<div style="top: ${top}%; left: ${left}%; transform: rotate(${rot}deg);">${sticker}</div>`; }
         
         function showPage(targetIndex) {
-            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
-            if (targetIndex < 0 || targetIndex >= totalPages) return;
+            const totalPages = slides.length + 1;
+            if (targetIndex < 0 || targetIndex > totalPages) return;
             
             const isClosing = targetIndex === 0; 
             const isOpening = currentIndex === 0 && targetIndex > 0;
@@ -238,21 +216,19 @@
             pageLeaves.forEach((leaf, index) => {
                 leaf.classList.toggle('is-flipped', index < currentIndex);
                 
-                // PERBAIKAN LOGIKA Z-INDEX
                 if (index < currentIndex) {
-                    leaf.style.zIndex = index + 1; // Halaman terbalik menumpuk dari bawah
+                    leaf.style.zIndex = index + 1;
                 } else {
-                    leaf.style.zIndex = totalPages - index; // Halaman belum terbalik menumpuk dari atas
+                    leaf.style.zIndex = totalPages - index;
                 }
 
-                const isCurrent = isMobile ? (index === currentIndex) : ((index === currentIndex - 1) || (index === currentIndex));
-                leaf.querySelectorAll('.page-front').forEach(p => p.classList.toggle('is-current', isCurrent));
-                if(!isMobile) leaf.querySelectorAll('.page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
+                const isCurrent = (index === currentIndex - 1) || (index === currentIndex);
+                leaf.querySelectorAll('.page-front, .page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
             });
             if (isOpening || (!isClosing && book.hasAttribute('data-initialized'))) { try { flipSound.currentTime = 0; flipSound.play(); } catch (e) {} }
             if(isClosing) song.pause();
             prevBtn.disabled = currentIndex === 0;
-            nextBtn.disabled = currentIndex >= totalPages - 1;
+            nextBtn.disabled = currentIndex >= totalPages -1;
         }
 
         function togglePlayPause() { if (song.paused) { if (currentIndex === 0) { showPage(1); } song.play(); } else { song.pause(); } }
@@ -262,8 +238,8 @@
         song.addEventListener('pause', () => { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); });
         prevBtn.addEventListener('click', () => showPage(currentIndex - 1));
         nextBtn.addEventListener('click', () => {
-            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
-            if (currentIndex >= totalPages - 1) {
+            const totalPages = slides.length + 1;
+            if (currentIndex >= totalPages -1) {
                 book.classList.add('opacity-0');
                 endScreen.classList.remove('opacity-0', 'pointer-events-none');
             } else {
@@ -277,7 +253,7 @@
             let slideIndex = -1;
             for (let i = 0; i < slides.length; i++) { if (song.currentTime >= slides[i].time) slideIndex = i; }
             if (slideIndex > -1) {
-                const newTargetPage = isMobile ? (slideIndex * 2) + 2 : slideIndex + 1;
+                const newTargetPage = slideIndex + 1;
                 if (newTargetPage > currentIndex) showPage(newTargetPage);
             }
         });
@@ -299,7 +275,7 @@
         book.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
         book.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
-            const totalPages = isMobile ? mobilePages.length : slides.length + 1;
+            const totalPages = slides.length + 1;
             if (touchEndX < touchStartX - 50) { // Swipe left
                 if (currentIndex < totalPages -1) showPage(currentIndex + 1);
                 else nextBtn.click();
