@@ -48,7 +48,7 @@
         }
         .font-title { font-family: 'Dancing Script', cursive; }
         .font-handwriting { font-family: 'Caveat', cursive; }
-        .book { transform-style: preserve-3d; position: relative; z-index: 2; touch-action: pan-y; } /* touch-action ditambahkan */
+        .book { transform-style: preserve-3d; position: relative; z-index: 2; touch-action: pan-y; }
         .book-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 50px; transform: translateX(-50%); background: linear-gradient(to right, rgba(0,0,0,0.15), rgba(0,0,0,0) 5%, rgba(0,0,0,0) 95%, rgba(0,0,0,0.15)); z-index: 1; }
         .page-leaf { transition: transform var(--duration) cubic-bezier(0.645, 0.045, 0.355, 1); transform-origin: left center; transform-style: preserve-3d; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .page-leaf.is-flipped { transform: rotateY(-180deg); box-shadow: none; }
@@ -129,7 +129,6 @@
 
         const stickers = [ `<svg class="sticker" viewBox="0 0 24 24" fill="rgba(239, 68, 68, 0.7)"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`, `<svg class="sticker" viewBox="0 0 24 24" fill="rgba(251, 191, 36, 0.7)"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>` ];
         
-        // Data cerita sekarang ada di sini, Anda bisa mengubahnya
         const storyData = {
             "title": "Karna Kamu Cantik",
             "subtitle": "Sebuah Scrapbook Digital",
@@ -176,8 +175,11 @@
                 for (let i = 0; i < totalPages; i++) {
                     const leaf = document.createElement('div');
                     leaf.className = 'page-leaf absolute w-full h-full top-0 left-0';
+                    leaf.style.transformOrigin = 'center';
+                    
                     const front = document.createElement('div');
                     front.className = 'page-front absolute w-full h-full bg-white rounded-lg flex items-center justify-center p-4';
+                    
                     const back = document.createElement('div');
                     back.className = 'page-back absolute w-full h-full bg-gray-100 rounded-lg';
                     
@@ -227,7 +229,7 @@
         
         function showPage(targetIndex) {
             const totalPages = isMobile ? mobilePages.length : slides.length + 1;
-            if (targetIndex < 0 || targetIndex > totalPages) return;
+            if (targetIndex < 0 || targetIndex >= totalPages) return;
             
             const isClosing = targetIndex === 0; 
             const isOpening = currentIndex === 0 && targetIndex > 0;
@@ -235,15 +237,22 @@
 
             pageLeaves.forEach((leaf, index) => {
                 leaf.classList.toggle('is-flipped', index < currentIndex);
-                leaf.style.zIndex = totalPages - index;
+                
+                // PERBAIKAN LOGIKA Z-INDEX
+                if (index < currentIndex) {
+                    leaf.style.zIndex = index + 1; // Halaman terbalik menumpuk dari bawah
+                } else {
+                    leaf.style.zIndex = totalPages - index; // Halaman belum terbalik menumpuk dari atas
+                }
+
                 const isCurrent = isMobile ? (index === currentIndex) : ((index === currentIndex - 1) || (index === currentIndex));
-                 leaf.querySelectorAll('.page-front').forEach(p => p.classList.toggle('is-current', isCurrent));
-                 if(!isMobile) leaf.querySelectorAll('.page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
+                leaf.querySelectorAll('.page-front').forEach(p => p.classList.toggle('is-current', isCurrent));
+                if(!isMobile) leaf.querySelectorAll('.page-back').forEach(p => p.classList.toggle('is-current', isCurrent));
             });
             if (isOpening || (!isClosing && book.hasAttribute('data-initialized'))) { try { flipSound.currentTime = 0; flipSound.play(); } catch (e) {} }
             if(isClosing) song.pause();
             prevBtn.disabled = currentIndex === 0;
-            nextBtn.disabled = currentIndex >= totalPages;
+            nextBtn.disabled = currentIndex >= totalPages - 1;
         }
 
         function togglePlayPause() { if (song.paused) { if (currentIndex === 0) { showPage(1); } song.play(); } else { song.pause(); } }
@@ -254,7 +263,7 @@
         prevBtn.addEventListener('click', () => showPage(currentIndex - 1));
         nextBtn.addEventListener('click', () => {
             const totalPages = isMobile ? mobilePages.length : slides.length + 1;
-            if (currentIndex >= totalPages) {
+            if (currentIndex >= totalPages - 1) {
                 book.classList.add('opacity-0');
                 endScreen.classList.remove('opacity-0', 'pointer-events-none');
             } else {
@@ -268,8 +277,8 @@
             let slideIndex = -1;
             for (let i = 0; i < slides.length; i++) { if (song.currentTime >= slides[i].time) slideIndex = i; }
             if (slideIndex > -1) {
-                const newTargetPage = isMobile ? (slideIndex * 2) + 1 : slideIndex + 1;
-                if (newTargetPage !== currentIndex) showPage(newTargetPage);
+                const newTargetPage = isMobile ? (slideIndex * 2) + 2 : slideIndex + 1;
+                if (newTargetPage > currentIndex) showPage(newTargetPage);
             }
         });
         progressContainer.addEventListener('click', (e) => { if (song.duration) song.currentTime = (e.offsetX / progressContainer.clientWidth) * song.duration; });
@@ -292,7 +301,7 @@
             touchEndX = e.changedTouches[0].screenX;
             const totalPages = isMobile ? mobilePages.length : slides.length + 1;
             if (touchEndX < touchStartX - 50) { // Swipe left
-                if (currentIndex < totalPages) showPage(currentIndex + 1);
+                if (currentIndex < totalPages -1) showPage(currentIndex + 1);
                 else nextBtn.click();
             }
             if (touchEndX > touchStartX + 50) { // Swipe right
