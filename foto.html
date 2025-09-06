@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alat Pengatur Foto (Google Drive)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Inter', sans-serif; }
+        .transition-all { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center min-h-screen p-4 transition-all">
+
+    <div class="w-full max-w-4xl text-center">
+        <h1 class="text-4xl font-bold text-sky-400">Alat Pengatur Foto</h1>
+        <p class="mt-2 text-gray-400">Ubah link Google Drive Anda menjadi koleksi foto untuk scrapbook.</p>
+
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+            <!-- Kolom Input -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">Langkah 1: Tempel Link Anda</h2>
+                <p class="text-sm text-gray-400 mb-4">Pastikan setiap foto di Google Drive sudah diatur ke "Siapa saja yang memiliki link". Tempel satu link per baris.</p>
+                <textarea id="links-input" rows="10" class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500" placeholder="https://drive.google.com/file/d/xxxxx/view..."></textarea>
+                <button id="process-btn" class="mt-4 w-full bg-sky-500 hover:bg-sky-600 transition-colors text-white font-bold py-3 px-6 rounded-lg text-lg">
+                    Proses Link
+                </button>
+                <div id="preview-container" class="mt-4">
+                    <h3 class="font-bold">Pratinjau Foto:</h3>
+                    <div id="image-previews" class="mt-2 grid grid-cols-3 gap-2 max-h-48 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Kolom Output -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">Langkah 2: Salin Hasilnya</h2>
+                <p class="text-sm text-gray-400 mb-4">Salin seluruh konten di bawah ini dan timpa isi file <code class="bg-gray-700 px-1 rounded">kumpulan_foto.json</code> Anda.</p>
+                <div class="relative">
+                    <textarea id="output-json" rows="12" class="w-full bg-gray-700 border border-gray-600 rounded-md p-4 text-sm text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500" readonly></textarea>
+                    <button id="copy-btn" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold py-1 px-3 rounded-md text-sm">Salin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const linksInput = document.getElementById('links-input');
+        const processBtn = document.getElementById('process-btn');
+        const imagePreviews = document.getElementById('image-previews');
+        const outputJsonEl = document.getElementById('output-json');
+        const copyBtn = document.getElementById('copy-btn');
+
+        processBtn.addEventListener('click', () => {
+            const links = linksInput.value.trim().split('\n').filter(link => link);
+            const directLinks = [];
+            
+            imagePreviews.innerHTML = ''; // Kosongkan pratinjau
+
+            links.forEach(link => {
+                const match = link.match(/d\/(.*?)(?:\/|\?|$)/);
+                if (match && match[1]) {
+                    const fileId = match[1];
+                    const directLink = `https://lh3.googleusercontent.com/d/${fileId}`;
+                    directLinks.push(directLink);
+
+                    // Tampilkan pratinjau
+                    const img = document.createElement('img');
+                    img.src = directLink;
+                    img.className = 'w-full h-auto object-cover rounded';
+                    img.onerror = () => img.classList.add('hidden'); // Sembunyikan jika error
+                    imagePreviews.appendChild(img);
+                }
+            });
+
+            const finalJson = {
+                photos: directLinks
+            };
+
+            outputJsonEl.value = JSON.stringify(finalJson, null, 4);
+        });
+        
+        copyBtn.addEventListener('click', () => {
+            outputJsonEl.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Tersalin!';
+            setTimeout(() => { copyBtn.textContent = 'Salin'; }, 2000);
+        });
+    </script>
+</body>
+</html>

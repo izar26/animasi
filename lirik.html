@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alat Sinkronisasi Lirik (Versi JSON)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Inter', sans-serif; }
+        .transition-all { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4 transition-all">
+
+    <!-- LANGKAH 1: PENGATURAN -->
+    <div id="setup-container" class="w-full max-w-2xl text-center transition-all">
+        <h1 class="text-4xl font-bold text-rose-400">Alat Sinkronisasi Lirik</h1>
+        <p class="mt-2 text-gray-400">Hasilkan konten untuk file <code class="bg-gray-700 px-1 rounded">lagu_dan_lirik.json</code> Anda.</p>
+        
+        <div class="mt-8 text-left bg-gray-800 p-6 rounded-lg space-y-4">
+            <div>
+                <label for="title-input" class="block text-sm font-medium text-gray-300">Judul Lagu</label>
+                <input type="text" id="title-input" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-rose-500 focus:border-rose-500" placeholder="Karna Kamu Cantik">
+            </div>
+            <div>
+                <label for="subtitle-input" class="block text-sm font-medium text-gray-300">Subjudul</label>
+                <input type="text" id="subtitle-input" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-rose-500 focus:border-rose-500" placeholder="Sebuah Scrapbook Digital">
+            </div>
+             <div>
+                <label for="song-file-input" class="block text-sm font-medium text-gray-300">Unggah File Lagu</label>
+                <input type="file" id="song-file-input" accept="audio/*" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-rose-500 file:text-white hover:file:bg-rose-600">
+            </div>
+            <div>
+                <label for="lyrics-input" class="block text-sm font-medium text-gray-300">Lirik Lagu (satu baris per lirik)</label>
+                <textarea id="lyrics-input" rows="8" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-rose-500 focus:border-rose-500" placeholder="Tempel lirik di sini..."></textarea>
+            </div>
+        </div>
+
+        <button id="start-sync-btn" class="mt-8 w-full bg-rose-500 hover:bg-rose-600 transition-colors text-white font-bold py-4 px-10 rounded-lg text-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+            Mulai Sinkronisasi
+        </button>
+    </div>
+    
+    <!-- LANGKAH 2: SINKRONISASI -->
+    <div id="sync-container" class="w-full max-w-3xl text-center hidden transition-all">
+        <h1 id="song-title-display" class="text-4xl font-bold text-rose-400"></h1>
+        <div class="mt-8">
+            <audio id="song" controls class="w-full"></audio>
+        </div>
+        <div id="lyric-display" class="mt-8 p-8 bg-gray-800 rounded-lg min-h-[120px] flex items-center justify-center">
+            <p id="current-lyric" class="text-2xl md:text-3xl font-semibold text-center"></p>
+        </div>
+        <div class="mt-8 flex flex-col md:flex-row gap-4 justify-center">
+            <button id="record-btn" class="w-full md:w-auto bg-green-500 hover:bg-green-600 transition-colors text-white font-bold py-4 px-10 rounded-lg text-xl shadow-lg disabled:opacity-50">
+                Catat & Lanjut (Spasi)
+            </button>
+            <button id="restart-btn" class="w-full md:w-auto bg-gray-600 hover:bg-gray-700 transition-colors text-white font-bold py-4 px-10 rounded-lg text-xl shadow-lg">
+                Ulangi dari Awal
+            </button>
+        </div>
+    </div>
+    
+    <!-- LANGKAH 3: HASIL -->
+    <div id="output-container" class="w-full max-w-2xl text-center hidden transition-all">
+         <h2 class="text-3xl font-bold text-green-400">Berhasil!</h2>
+         <p class="mt-2 text-gray-400">Salin seluruh konten di bawah ini dan timpa isi file <code class="bg-gray-700 px-1 rounded">lagu_dan_lirik.json</code> Anda.</p>
+         <div class="mt-6 text-left relative">
+            <textarea id="output-code" rows="12" class="w-full bg-gray-800 border border-gray-600 rounded-md p-4 text-sm text-gray-300 font-mono focus:outline-none focus:ring-2 focus:ring-rose-500" readonly></textarea>
+            <button id="copy-btn" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold py-1 px-3 rounded-md text-sm">Salin Kode</button>
+         </div>
+         <button id="restart-all-btn" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 transition-colors text-white font-bold py-2 px-8 rounded-lg text-lg">
+            Buat Proyek Baru
+        </button>
+    </div>
+
+    <script>
+        // DOM Elements
+        const setupContainer = document.getElementById('setup-container');
+        const syncContainer = document.getElementById('sync-container');
+        const outputContainer = document.getElementById('output-container');
+        
+        const titleInput = document.getElementById('title-input');
+        const subtitleInput = document.getElementById('subtitle-input');
+        const songFileInput = document.getElementById('song-file-input');
+        const lyricsInput = document.getElementById('lyrics-input');
+        const startSyncBtn = document.getElementById('start-sync-btn');
+        
+        const song = document.getElementById('song');
+        const songTitleDisplay = document.getElementById('song-title-display');
+        const recordBtn = document.getElementById('record-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const currentLyricEl = document.getElementById('current-lyric');
+        
+        const outputCodeEl = document.getElementById('output-code');
+        const copyBtn = document.getElementById('copy-btn');
+        const restartAllBtn = document.getElementById('restart-all-btn');
+
+        let storyConfig = {};
+        let currentIndex = 0;
+        let syncedSlides = [];
+        let hasStarted = false;
+
+        function validateForm() {
+            const title = titleInput.value.trim();
+            const songFile = songFileInput.files.length > 0;
+            const lyrics = lyricsInput.value.trim();
+            startSyncBtn.disabled = !(title && songFile && lyrics);
+        }
+        titleInput.addEventListener('input', validateForm);
+        songFileInput.addEventListener('change', validateForm);
+        lyricsInput.addEventListener('input', validateForm);
+
+        startSyncBtn.addEventListener('click', () => {
+            const lyrics = lyricsInput.value.trim().split('\n').filter(line => line);
+            storyConfig = {
+                title: titleInput.value.trim(),
+                subtitle: subtitleInput.value.trim(),
+                songUrl: URL.createObjectURL(songFileInput.files[0]),
+                lyrics: lyrics
+            };
+            
+            song.src = storyConfig.songUrl;
+            songTitleDisplay.textContent = storyConfig.title;
+            
+            setupContainer.classList.add('hidden');
+            syncContainer.classList.remove('hidden');
+            startSyncProcess();
+        });
+
+        function startSyncProcess() {
+            hasStarted = false;
+            currentIndex = 0;
+            syncedSlides = [];
+            recordBtn.disabled = true;
+            song.currentTime = 0;
+            currentLyricEl.textContent = "- Tekan Play untuk Memulai -";
+        }
+        
+        function updateLyricDisplay() {
+            if (currentIndex < storyConfig.lyrics.length) {
+                currentLyricEl.textContent = storyConfig.lyrics[currentIndex];
+            } else {
+                finishSync();
+            }
+        }
+
+        function recordTimeAndNext() {
+            if (currentIndex >= storyConfig.lyrics.length || !hasStarted) return;
+            syncedSlides.push({
+                time: parseFloat(song.currentTime.toFixed(3)),
+                text: storyConfig.lyrics[currentIndex]
+            });
+            currentIndex++;
+            updateLyricDisplay();
+        }
+
+        function finishSync() {
+            currentLyricEl.textContent = "Selesai!";
+            recordBtn.disabled = true;
+            generateOutputCode();
+            syncContainer.classList.add('hidden');
+            outputContainer.classList.remove('hidden');
+        }
+        
+        function generateOutputCode() {
+            const finalJson = {
+                title: storyConfig.title,
+                subtitle: storyConfig.subtitle,
+                songUrl: songFileInput.files[0].name,
+                slides: syncedSlides
+            };
+            
+            const jsonString = JSON.stringify(finalJson, null, 4);
+            outputCodeEl.value = jsonString;
+        }
+
+        song.addEventListener('play', () => {
+            if (!hasStarted) {
+                hasStarted = true;
+                recordBtn.disabled = false;
+                updateLyricDisplay();
+            }
+        });
+        
+        recordBtn.addEventListener('click', recordTimeAndNext);
+        restartBtn.addEventListener('click', startSyncProcess);
+
+        document.body.addEventListener('keyup', (e) => {
+            if (e.key === ' ' || e.code === 'Space') {
+                if (!recordBtn.disabled) {
+                    e.preventDefault();
+                    recordBtn.click();
+                }
+            }
+        });
+        
+        copyBtn.addEventListener('click', () => {
+            outputCodeEl.select();
+            document.execCommand('copy');
+            copyBtn.textContent = 'Tersalin!';
+            setTimeout(() => { copyBtn.textContent = 'Salin Kode'; }, 2000);
+        });
+        
+        restartAllBtn.addEventListener('click', () => { location.reload(); });
+    </script>
+</body>
+</html>
+
